@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -14,4 +16,6 @@ public class CategoryResponse {
     private String name;
     private String description;
     private String slug;
+    private String parentId;
+    private List<CategoryResponse> children;
 }

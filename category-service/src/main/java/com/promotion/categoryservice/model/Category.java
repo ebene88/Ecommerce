@@ -25,4 +25,8 @@ public class Category {
 
     @Column(unique = true)
     private String slug; // optional for URLs
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Category parent;
 }

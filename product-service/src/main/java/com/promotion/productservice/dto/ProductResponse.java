@@ -4,8 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -17,4 +19,7 @@ public class ProductResponse {
     private String description;
     private BigDecimal price;
     private String categoryName;
+    private String sellerName;
+    private List<String> imageUrls;
+
 }

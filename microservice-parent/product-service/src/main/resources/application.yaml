@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: product-service
+
+  data:
+    mongodb:
+      uri: mongodb://admin:admin@mongodb:27017/promotion_product?authSource=promotion_product
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/ecommerce
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${random.value}
+    prefer-ip-address: true
+  client:
+    serviceUrl:
+      defaultZone: http://discovery-server:8761/eureka
+
+minio:
+  url: http://minio:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: product-images

@@ -1,0 +1,74 @@
+version: '3.9'
+
+services:
+
+  discovery-server:
+    build: ./discovery-server
+    container_name: discovery-server
+    environment:
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: password
+    ports:
+      - "8761:8761"
+    networks:
+      - micro-net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.0
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command: start-dev
+    ports:
+      - "8080:8080"
+    networks:
+      - micro-net
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: promotion_product
+    ports:
+      - "27017:27017"
+    networks:
+      - micro-net
+
+  minio:
+    image: minio/minio:RELEASE.2025-01-01T00-00-00Z
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data
+    ports:
+      - "9000:9000"
+    networks:
+      - micro-net
+
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    depends_on:
+      - mongodb
+      - minio
+      - keycloak
+      - discovery-server
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/promotion_product?authSource=promotion_product
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: http://keycloak:8080/realms/ecommerce
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: product-images
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_APPLICATION_NAME: product-service
+    networks:
+      - micro-net
+
+networks:
+  micro-net:
+    driver: bridge

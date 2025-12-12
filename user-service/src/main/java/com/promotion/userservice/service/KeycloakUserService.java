@@ -129,4 +129,24 @@ public class KeycloakUserService {
         user.singleAttribute(key, value);
         keycloak.realm(realm).users().get(userId).update(user);
     }
+
+
+    public void updateUserStatus(String userId, boolean active) {
+        try {
+            UsersResource usersResource = keycloak.realm(realm).users();
+
+            UserRepresentation user = usersResource.get(userId).toRepresentation();
+            if (user == null) {
+                throw new NotFoundException("User not found");
+            }
+
+            user.setEnabled(active); // true = active, false = inactive
+
+            usersResource.get(userId).update(user);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating user status: " + e.getMessage(), e);
+        }
+    }
+
 }

@@ -47,5 +47,11 @@ public class UserController {
         return keycloakUserService.getAllUsers();
     }
 
+    @PutMapping("/{userId}/status")
+    public void updateUserStatus(@PathVariable String userId, @RequestParam boolean active) {
+        keycloakUserService.updateUserStatus(userId, active);
+    }
+
+
 
 }

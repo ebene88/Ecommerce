@@ -1,5 +1,6 @@
 package com.promotion.productservice.dto;
 
+import com.promotion.productservice.model.Product;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,4 +23,15 @@ public class ProductResponse {
     private String sellerName;
     private List<String> imageUrls;
 
+    public static ProductResponse fromEntity(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .build();
+    }
+
 }
+
+

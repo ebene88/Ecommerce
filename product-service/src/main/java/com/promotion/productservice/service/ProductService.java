@@ -1,6 +1,7 @@
 package com.promotion.productservice.service;
 
 import com.promotion.productservice.client.*;
+import com.promotion.productservice.dto.PaginatedResponse;
 import com.promotion.productservice.dto.ProductRequest;
 import com.promotion.productservice.dto.ProductResponse;
 import com.promotion.productservice.dto.ProductSearchDTO;
@@ -9,6 +10,8 @@ import com.promotion.productservice.repository.ProductRepository;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -64,9 +67,21 @@ public class ProductService {
         return mapToProductResponse(product);
     }
 
-    public List<ProductResponse> getAllProducts() {
-        List<Product> products = productRepository.findAll();
-        return  products.stream().map(this::mapToProductResponse).toList();
+
+    public PaginatedResponse<ProductResponse> getAllProducts(Pageable pageable, String search) {
+        Page<Product> products;
+        if (search == null || search.isEmpty()) {
+            products = productRepository.findAll(pageable);
+        } else {
+            products = productRepository.searchByNameOrDescription(search, pageable);
+        }
+        return new PaginatedResponse<>(
+                products.map(ProductResponse::fromEntity).getContent(),
+                products.getNumber(),
+                products.getSize(),
+                products.getTotalElements(),
+                products.getTotalPages()
+        );
     }
 
     public List<ProductResponse> getProductsBySeller(String sellerId) {

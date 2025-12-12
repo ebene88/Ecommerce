@@ -65,6 +65,22 @@ public class ProductController {
         );
     }
 
+    @GetMapping("/public/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Get product by ID",
+            description = "Returns a single product by its ID"
+    )
+    public ApiResponse<ProductResponse, Object> getProductById(@PathVariable String id) {
+        ProductResponse product = productService.getProductById(id);
+
+        return new ApiResponse<>(
+                "success",
+                "Product fetched successfully",
+                product,
+                null
+        );
+    }
 
 
     @GetMapping("/my-products")

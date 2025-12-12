@@ -82,6 +82,14 @@ public class ProductService {
         );
     }
 
+    public ProductResponse getProductById(String id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        return ProductResponse.fromEntity(product);
+    }
+
+
     public List<ProductResponse> getProductsBySeller(String sellerId) {
         List<Product> products = productRepository.findBySellerId(sellerId);
         return products.stream()

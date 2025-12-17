@@ -29,6 +29,9 @@ public class ProductResponse {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
+                .categoryName(product.getCategoryId())
+                .sellerName(product.getSellerId())
+                .imageUrls(product.getImageUrls())
                 .build();
     }
 

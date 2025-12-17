@@ -20,6 +20,7 @@ public class SecurityConfig {
                         // ✅ public endpoints
                         .pathMatchers(
                                 "/api/product/public/**",
+                                "api/recommendations/**",
                                 "/eureka/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",

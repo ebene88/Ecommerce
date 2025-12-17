@@ -73,8 +73,13 @@ public class ProductService {
         } else {
             products = productRepository.searchByNameOrDescription(search, pageable);
         }
+
+        List<ProductResponse> productResponses = products.stream()
+                .map(this::mapToProductResponse)
+                .toList();
+
         return new PaginatedResponse<>(
-                products.map(ProductResponse::fromEntity).getContent(),
+                productResponses,
                 products.getNumber(),
                 products.getSize(),
                 products.getTotalElements(),
@@ -140,12 +145,26 @@ public class ProductService {
         } else {
             seller = new UserResponse(null, "Unknown Seller");
         }
+
+
+        CategoryResponse category = null;
+
+        if (product.getCategoryId() != null && !product.getCategoryId().isEmpty()) {
+            try {
+                category = categoryClient.getCategoryById(product.getCategoryId());
+            } catch (FeignException.NotFound e) {
+                // Handle case where category does not exist
+                category = new CategoryResponse(product.getCategoryId(), "Unknown Category", "Unknown Category", "Unknown Category");
+            }
+        } else {
+            category = new CategoryResponse(null, "Unknown Category","Unknown Category","Unknown Category");
+        }
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
-                .categoryName(product.getCategoryId())
+                .categoryName(category.getName())
                 .sellerName(seller.getUsername())
                 .imageUrls(product.getImageUrls())
                 .build();

@@ -9,54 +9,100 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as ProtectedSellerProfileRouteImport } from './routes/_protected/sellerProfile'
 import { Route as PublicProductsIndexRouteImport } from './routes/_public/products/index'
+import { Route as PublicProductsProductIdRouteImport } from './routes/_public/products/$productId'
 
+const ProtectedRoute = ProtectedRouteImport.update({
+  id: '/_protected',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/_public/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedSellerProfileRoute = ProtectedSellerProfileRouteImport.update({
+  id: '/sellerProfile',
+  path: '/sellerProfile',
+  getParentRoute: () => ProtectedRoute,
 } as any)
 const PublicProductsIndexRoute = PublicProductsIndexRouteImport.update({
   id: '/_public/products/',
   path: '/products/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicProductsProductIdRoute = PublicProductsProductIdRouteImport.update({
+  id: '/_public/products/$productId',
+  path: '/products/$productId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/sellerProfile': typeof ProtectedSellerProfileRoute
   '/': typeof PublicIndexRoute
+  '/products/$productId': typeof PublicProductsProductIdRoute
   '/products': typeof PublicProductsIndexRoute
 }
 export interface FileRoutesByTo {
+  '/sellerProfile': typeof ProtectedSellerProfileRoute
   '/': typeof PublicIndexRoute
+  '/products/$productId': typeof PublicProductsProductIdRoute
   '/products': typeof PublicProductsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_protected': typeof ProtectedRouteWithChildren
+  '/_protected/sellerProfile': typeof ProtectedSellerProfileRoute
   '/_public/': typeof PublicIndexRoute
+  '/_public/products/$productId': typeof PublicProductsProductIdRoute
   '/_public/products/': typeof PublicProductsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/products'
+  fullPaths: '/sellerProfile' | '/' | '/products/$productId' | '/products'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/products'
-  id: '__root__' | '/_public/' | '/_public/products/'
+  to: '/sellerProfile' | '/' | '/products/$productId' | '/products'
+  id:
+    | '__root__'
+    | '/_protected'
+    | '/_protected/sellerProfile'
+    | '/_public/'
+    | '/_public/products/$productId'
+    | '/_public/products/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  ProtectedRoute: typeof ProtectedRouteWithChildren
   PublicIndexRoute: typeof PublicIndexRoute
+  PublicProductsProductIdRoute: typeof PublicProductsProductIdRoute
   PublicProductsIndexRoute: typeof PublicProductsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_protected': {
+      id: '/_protected'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof ProtectedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_public/': {
       id: '/_public/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_protected/sellerProfile': {
+      id: '/_protected/sellerProfile'
+      path: '/sellerProfile'
+      fullPath: '/sellerProfile'
+      preLoaderRoute: typeof ProtectedSellerProfileRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_public/products/': {
       id: '/_public/products/'
@@ -65,11 +111,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicProductsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_public/products/$productId': {
+      id: '/_public/products/$productId'
+      path: '/products/$productId'
+      fullPath: '/products/$productId'
+      preLoaderRoute: typeof PublicProductsProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface ProtectedRouteChildren {
+  ProtectedSellerProfileRoute: typeof ProtectedSellerProfileRoute
+}
+
+const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedSellerProfileRoute: ProtectedSellerProfileRoute,
+}
+
+const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
+  ProtectedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
+  ProtectedRoute: ProtectedRouteWithChildren,
   PublicIndexRoute: PublicIndexRoute,
+  PublicProductsProductIdRoute: PublicProductsProductIdRoute,
   PublicProductsIndexRoute: PublicProductsIndexRoute,
 }
 export const routeTree = rootRouteImport

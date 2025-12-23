@@ -86,14 +86,6 @@ function Breadcrumbs() {
                   <BreadcrumbItem key={`breadcrumb-item-${segment}-${index}`}>
                     <BreadcrumbLink
                       asChild
-                      //       className="font-mono capitalize text-muted-foreground
-                      // text-[13px] leading-tight truncate break-words
-                      //  max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap
-                      //  sm:text-sm sm:max-w-[250px] sm:truncate-none
-                      // md:text-base lg:text-base
-                      //  md:truncate-none
-
-                      //  "
                       className="
     font-mono capitalize text-muted-foreground text-[13px] leading-tight
     max-w-[100px] truncate overflow-hidden text-ellipsis whitespace-nowrap

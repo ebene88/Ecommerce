@@ -1,10 +1,15 @@
 package com.promotion.categoryservice.controller;
 
+import com.promotion.categoryservice.dto.ApiResponse;
 import com.promotion.categoryservice.dto.CategoryRequest;
 import com.promotion.categoryservice.dto.CategoryResponse;
+import com.promotion.categoryservice.exception.GlobalExceptionHandler;
+import com.promotion.categoryservice.exception.NotFoundException;
 import com.promotion.categoryservice.model.Category;
 import com.promotion.categoryservice.repository.CategoryRepository;
+import com.promotion.categoryservice.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -19,9 +24,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CategoryController {
     private final CategoryRepository categoryRepository;
+    private  final CategoryService categoryService;
 
     @PostMapping
-    public CategoryResponse create(@RequestBody CategoryRequest request) {
+    public ApiResponse<CategoryResponse, Void> create(@RequestBody CategoryRequest request) {
         Category parent = null;
         if (request.getParentId() != null) {
             parent = categoryRepository.findById(request.getParentId())
@@ -34,24 +40,48 @@ public class CategoryController {
                 .parent(parent)
                 .build();
         categoryRepository.save(category);
-        return mapToResponse(category, new ArrayList<>());
+
+
+        return new ApiResponse<>(
+                "success",
+                "Category created successfully",
+                mapToResponse(category, new ArrayList<>()),
+                null
+        );
     }
 
     @GetMapping
-    public List<CategoryResponse> getAll() {
+    public ApiResponse<List<CategoryResponse>, Void> getAll() {
         List<Category> categories = categoryRepository.findAll();
 
         Map<String, List<Category>> groupedByParent = categories.stream()
-                .collect(Collectors.groupingBy(cat -> cat.getParent() == null ? "root" : String.valueOf(cat.getParent().getId())));
+                .collect(Collectors.groupingBy(
+                        cat -> cat.getParent() == null
+                                ? "root"
+                                : String.valueOf(cat.getParent().getId())
+                ));
 
-        return buildTree(groupedByParent, "root");
+        List<CategoryResponse> tree = buildTree(groupedByParent, "root");
+
+        return new ApiResponse<>(
+                "success",
+                "Categories fetched successfully",
+                tree,
+                null
+        );
     }
 
     @GetMapping("/{id}")
     public CategoryResponse getById(@PathVariable String id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new NotFoundException("Category not found"));
         return mapToResponse(category, new ArrayList<>());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteCategory(@PathVariable String id) {
+        categoryService.deleteById(id);
+        return ResponseEntity.ok("Category deleted successfully");
     }
 
     private List<CategoryResponse> buildTree(Map<String, List<Category>> grouped, String parentId) {

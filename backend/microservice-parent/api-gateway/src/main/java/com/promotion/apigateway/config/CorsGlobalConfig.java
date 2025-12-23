@@ -14,11 +14,24 @@ public class CorsGlobalConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(List.of("*")); // Allow all for testing
-        corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // ✅ Explicit frontend origin (Vite)
+        corsConfig.setAllowedOrigins(List.of("http://localhost:5173"));
+
+        // ✅ Allow Authorization, Content-Type, etc.
         corsConfig.setAllowedHeaders(List.of("*"));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // ✅ Allow common HTTP methods
+        corsConfig.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        );
+
+        // ✅ IMPORTANT if using Authorization header or cookies
+        corsConfig.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", corsConfig);
 
         return new CorsWebFilter(source);

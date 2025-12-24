@@ -12,7 +12,7 @@ public class CategoryService {
 
 
 
-    public void deleteById(String id) {
+    public void deleteById(Long id) {
         if (!categoryRepository.existsById(id)) {
             throw new EntityNotFoundException("Category not found with id " + id);
         }

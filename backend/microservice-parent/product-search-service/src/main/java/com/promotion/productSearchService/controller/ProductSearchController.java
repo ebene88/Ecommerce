@@ -1,5 +1,7 @@
 package com.promotion.productSearchService.controller;
 
+import com.promotion.productSearchService.dto.ApiResponse;
+import com.promotion.productSearchService.dto.PaginatedResponse;
 import com.promotion.productSearchService.dto.ProductSearchDTO;
 import com.promotion.productSearchService.model.ProductDocument;
 import com.promotion.productSearchService.service.ProductSearchService;
@@ -25,36 +27,39 @@ public class ProductSearchController {
     }
 
 
+    @GetMapping("/search")
+    public ApiResponse<PaginatedResponse<ProductDocument>, Void> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws IOException {
 
+        PaginatedResponse<ProductDocument> paginated = productSearchService.searchByKeyword(keyword, page, size);
 
-    @PostMapping("/search")
-    public List<ProductDocument> search(@RequestBody ProductSearchDTO request) throws IOException {
-        return productSearchService.searchProducts(
-                request.getKeyword(),
-                request.getCategory(),
-                request.getMinPrice(),
-                request.getMaxPrice(),
-                request.getPage(),
-                request.getSize(),
-                request.getSortField(),
-                request.getSortDirection()
+        return new ApiResponse<>(
+                "success",
+                "Products fetched successfully",
+                paginated,
+                null
         );
     }
 
-    @GetMapping("/filter")
-    public List<ProductDocument> filterProducts(
+
+    // 🔹 Filter search (category, price, attributes, sorting)
+    @PostMapping("/filter")
+    public ApiResponse<PaginatedResponse<ProductDocument>, Void> filterProducts(
             @RequestBody ProductSearchDTO request
     ) throws IOException {
-        return productSearchService.searchProducts(request.getKeyword(),
-                request.getCategory(),
-                request.getMinPrice(),
-                request.getMaxPrice(),
-                request.getPage(),
-                request.getSize(),
-                request.getSortField(),
-                request.getSortDirection());
-    }
+        PaginatedResponse<ProductDocument> paginated =
+                productSearchService.searchProducts(request);
 
+        return new ApiResponse<>(
+                "success",
+                "Filtered products fetched successfully",
+                paginated,
+                null
+        );
+    }
 
     // 🔹 Delete a product by ID
     @DeleteMapping("/{id}")

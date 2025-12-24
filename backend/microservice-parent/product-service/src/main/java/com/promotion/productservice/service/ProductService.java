@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +33,12 @@ public class ProductService {
     public ProductResponse create(ProductRequest request, List<MultipartFile> images, String sellerId) {
 
         CategoryResponse category = categoryClient.getCategoryById(request.getCategoryId());
+
+        List<CategoryAttributeResponse> categoryAttributes =
+                categoryClient.getCategoryAttributes(request.getCategoryId()).getData();
         List<String> imageUrls = minioService.uploadMultipleFiles(images);
+        // Validate attribute
+        validateAttributes(request.getAttributes(), categoryAttributes);
 
         Product product = Product.builder()
                 .name(request.getName())
@@ -41,6 +47,7 @@ public class ProductService {
                 .categoryId(category.getId())
                 .sellerId(sellerId)
                 .imageUrls(imageUrls)
+                .attributes(request.getAttributes())
                 .build();
 
 
@@ -51,7 +58,8 @@ public class ProductService {
         searchDTO.setId(product.getId());
         searchDTO.setName(product.getName());
         searchDTO.setDescription(product.getDescription());
-        searchDTO.setCategoryId(category.getName());
+        searchDTO.setCategoryId(category.getId());
+        searchDTO.setAttributes(product.getAttributes());
         searchDTO.setPrice(product.getPrice());
         searchDTO.setImageUrls(imageUrls);
 
@@ -114,6 +122,8 @@ public class ProductService {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
+        product.setAttributes(request.getAttributes());
+
 
         productRepository.save(product);
         return mapToProductResponse(product);
@@ -149,7 +159,7 @@ public class ProductService {
 
         CategoryResponse category = null;
 
-        if (product.getCategoryId() != null && !product.getCategoryId().isEmpty()) {
+        if (product.getCategoryId() != null && !product.getCategoryId().describeConstable().isEmpty()) {
             try {
                 category = categoryClient.getCategoryById(product.getCategoryId());
             } catch (FeignException.NotFound e) {
@@ -164,9 +174,50 @@ public class ProductService {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
-                .categoryName(category.getName())
+                .categoryId(product.getCategoryId())
                 .sellerName(seller.getUsername())
                 .imageUrls(product.getImageUrls())
+                .attributes(product.getAttributes())
                 .build();
     }
+
+    private void validateAttributes(
+            Map<String, Object> attributes,
+            List<CategoryAttributeResponse> categoryAttributes
+    ) {
+        if (attributes == null || attributes.isEmpty()) return;
+
+        for (CategoryAttributeResponse attr : categoryAttributes) {
+            Object value = attributes.get(attr.getCode());
+
+            if (value == null) {
+                continue; // optional attribute
+            }
+
+            switch (attr.getType()) {
+                case "number" -> {
+                    if (!(value instanceof Number)) {
+                        throw new IllegalArgumentException(
+                                "Attribute " + attr.getCode() + " must be a number"
+                        );
+                    }
+                }
+                case "boolean" -> {
+                    if (!(value instanceof Boolean)) {
+                        throw new IllegalArgumentException(
+                                "Attribute " + attr.getCode() + " must be boolean"
+                        );
+                    }
+                }
+                case "string" -> {
+                    if (!(value instanceof String)) {
+                        throw new IllegalArgumentException(
+                                "Attribute " + attr.getCode() + " must be string"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
 }

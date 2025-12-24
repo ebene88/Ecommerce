@@ -30,7 +30,7 @@ public class CategoryController {
     public ApiResponse<CategoryResponse, Void> create(@RequestBody CategoryRequest request) {
         Category parent = null;
         if (request.getParentId() != null) {
-            parent = categoryRepository.findById(request.getParentId())
+            parent = categoryRepository.findById(Long.valueOf(request.getParentId()))
                     .orElseThrow(() -> new RuntimeException("Parent category not found"));
         }
         Category category = Category.builder()
@@ -72,14 +72,14 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public CategoryResponse getById(@PathVariable String id) {
+    public CategoryResponse getById(@PathVariable Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
         return mapToResponse(category, new ArrayList<>());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteCategory(@PathVariable String id) {
+    public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
         categoryService.deleteById(id);
         return ResponseEntity.ok("Category deleted successfully");
     }

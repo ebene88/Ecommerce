@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -19,9 +20,11 @@ public class ProductResponse {
     private String name;
     private String description;
     private BigDecimal price;
-    private String categoryName;
+    private Long categoryId;
     private String sellerName;
     private List<String> imageUrls;
+    private Map<String, Object> attributes;
+
 
     public static ProductResponse fromEntity(Product product) {
         return ProductResponse.builder()
@@ -29,9 +32,10 @@ public class ProductResponse {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
-                .categoryName(product.getCategoryId())
+                .categoryId(product.getCategoryId())
                 .sellerName(product.getSellerId())
                 .imageUrls(product.getImageUrls())
+                .attributes(product.getAttributes())
                 .build();
     }
 

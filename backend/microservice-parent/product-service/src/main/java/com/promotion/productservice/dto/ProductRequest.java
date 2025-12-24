@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -17,5 +18,6 @@ public class ProductRequest {
     private String name;
     private String description;
     private BigDecimal price;
-    private String categoryId;
+    private Long categoryId;
+    private Map<String, Object> attributes;
 }

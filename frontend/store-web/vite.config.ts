@@ -18,8 +18,9 @@ export default defineConfig({
       strategies: "injectManifest",
       srcDir: "src",
       filename: "sw.ts",
+
       registerType: "prompt",
-      injectRegister: false,
+      injectRegister: "auto",
 
       pwaAssets: {
         disabled: false,
@@ -31,6 +32,48 @@ export default defineConfig({
         short_name: "ecommerce",
         description: "ecommerce",
         theme_color: "#ffffff",
+        display: "standalone",
+        start_url: "/",
+
+        icons: [
+          {
+            src: "/icons/android-chrome-48x48.png",
+            sizes: "48x48",
+            type: "image/png",
+          },
+          {
+            src: "/icons/android-chrome-72x72.png",
+            sizes: "72x72",
+            type: "image/png",
+          },
+          {
+            src: "/icons/android-chrome-96x96.png",
+            sizes: "96x96",
+            type: "image/png",
+          },
+          {
+            src: "/icons/android-chrome-144x144.png",
+            sizes: "144x144",
+            type: "image/png",
+          },
+
+          {
+            src: "/icons/android-chrome-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/icons/android-chrome-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+          {
+            src: "/icons/android-chrome-512x512-maskable.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
       },
 
       injectManifest: {
@@ -38,7 +81,7 @@ export default defineConfig({
       },
 
       devOptions: {
-        enabled: false,
+        enabled: true,
         navigateFallback: "index.html",
         suppressWarnings: true,
         type: "module",

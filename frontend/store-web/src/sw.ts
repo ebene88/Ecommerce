@@ -1,28 +1,47 @@
 /// <reference lib="webworker" />
-import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
-import { NavigationRoute, registerRoute } from 'workbox-routing'
 
-declare let self: ServiceWorkerGlobalScope
+import {
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+  precacheAndRoute,
+} from "workbox-precaching";
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING')
-    self.skipWaiting()
-})
+import { NavigationRoute, registerRoute } from "workbox-routing";
+import { CacheFirst, NetworkFirst } from "workbox-strategies";
 
-// self.__WB_MANIFEST is the default injection point
-precacheAndRoute(self.__WB_MANIFEST)
+declare let self: ServiceWorkerGlobalScope;
 
-// clean old assets
-cleanupOutdatedCaches()
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+});
 
-/** @type {RegExp[] | undefined} */
-let allowlist
-// in dev mode, we disable precaching to avoid caching issues
-if (import.meta.env.DEV)
-  allowlist = [/^\/$/]
+// Precache build assets
+precacheAndRoute(self.__WB_MANIFEST);
 
-// to allow work offline
-registerRoute(new NavigationRoute(
-  createHandlerBoundToURL('index.html'),
-  { allowlist },
-))
+// Clean old caches
+cleanupOutdatedCaches();
+
+let allowlist;
+if (import.meta.env.DEV) allowlist = [/^\/$/];
+
+// SPA offline navigation
+registerRoute(
+  new NavigationRoute(createHandlerBoundToURL("index.html"), { allowlist })
+);
+
+// ✅ Cache API calls
+registerRoute(
+  ({ url }) => url.pathname.startsWith("/api"),
+  new NetworkFirst({
+    cacheName: "api-cache",
+    networkTimeoutSeconds: 3,
+  })
+);
+
+// ✅ Cache images
+registerRoute(
+  ({ request }) => request.destination === "image",
+  new CacheFirst({
+    cacheName: "image-cache",
+  })
+);

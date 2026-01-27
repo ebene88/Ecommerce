@@ -8,8 +8,7 @@ type SimilarProductsProps = {
 };
 
 export function SimilarProducts({ productId }: SimilarProductsProps) {
-  const { data, isLoading, isError } =
-    $product.GetSimilarProductById(productId);
+  const { data, isLoading, isError } = $product.GetSimilarById(productId);
 
   if (isLoading) {
     return <div className="mt-8 text-muted-foreground">Loading products…</div>;

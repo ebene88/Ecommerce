@@ -57,8 +57,9 @@ function RootComponent() {
                 <ThemeToggle />
               </div>
             </header>
-
-            <Outlet />
+            <div className="px-5 py-10">
+              <Outlet />
+            </div>
           </SidebarInset>
         </SidebarProvider>
       </div>

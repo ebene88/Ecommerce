@@ -7,6 +7,15 @@ import type { TPaginatedProduct } from "@/schema/product.schema";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { queryClient } from "./client";
 
+function useCategoryAttributes(categoryId?: string | number) {
+  return useQuery({
+    queryKey: ["category-attributes", categoryId],
+    queryFn: async () =>
+      (await api.get(`/categories/${categoryId}/attributes`)).data.data,
+    enabled: !!categoryId,
+  });
+}
+
 export const $category = {
   GetAll: () =>
     useSuspenseQuery({
@@ -41,5 +50,12 @@ export const $category = {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["category"] });
       },
+    }),
+
+  GetAttributesByCategoryId: (categoryId: number) =>
+    useSuspenseQuery({
+      queryKey: ["category-attributes", categoryId],
+      queryFn: async () =>
+        (await $api.get(`/categories/${categoryId}/attributes`)).data.data,
     }),
 };

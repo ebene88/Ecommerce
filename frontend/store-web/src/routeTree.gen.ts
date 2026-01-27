@@ -11,9 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as PublicSearchRouteImport } from './routes/_public/search'
 import { Route as ProtectedSellerProfileRouteImport } from './routes/_protected/sellerProfile'
 import { Route as PublicProductsIndexRouteImport } from './routes/_public/products/index'
 import { Route as PublicProductsProductIdRouteImport } from './routes/_public/products/$productId'
+import { Route as ProtectedProductNewRouteImport } from './routes/_protected/product/new'
+import { Route as ProtectedProductMyProductRouteImport } from './routes/_protected/product/my-product'
+import { Route as PublicCCategoryIndexRouteImport } from './routes/_public/c/$category/index'
+import { Route as PublicCCategorySubcategoryRouteImport } from './routes/_public/c/$category/$subcategory'
 
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
@@ -22,6 +27,11 @@ const ProtectedRoute = ProtectedRouteImport.update({
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/_public/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicSearchRoute = PublicSearchRouteImport.update({
+  id: '/_public/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedSellerProfileRoute = ProtectedSellerProfileRouteImport.update({
@@ -39,46 +49,109 @@ const PublicProductsProductIdRoute = PublicProductsProductIdRouteImport.update({
   path: '/products/$productId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedProductNewRoute = ProtectedProductNewRouteImport.update({
+  id: '/product/new',
+  path: '/product/new',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedProductMyProductRoute =
+  ProtectedProductMyProductRouteImport.update({
+    id: '/product/my-product',
+    path: '/product/my-product',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const PublicCCategoryIndexRoute = PublicCCategoryIndexRouteImport.update({
+  id: '/_public/c/$category/',
+  path: '/c/$category/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicCCategorySubcategoryRoute =
+  PublicCCategorySubcategoryRouteImport.update({
+    id: '/_public/c/$category/$subcategory',
+    path: '/c/$category/$subcategory',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/sellerProfile': typeof ProtectedSellerProfileRoute
+  '/search': typeof PublicSearchRoute
   '/': typeof PublicIndexRoute
+  '/product/my-product': typeof ProtectedProductMyProductRoute
+  '/product/new': typeof ProtectedProductNewRoute
   '/products/$productId': typeof PublicProductsProductIdRoute
   '/products': typeof PublicProductsIndexRoute
+  '/c/$category/$subcategory': typeof PublicCCategorySubcategoryRoute
+  '/c/$category': typeof PublicCCategoryIndexRoute
 }
 export interface FileRoutesByTo {
   '/sellerProfile': typeof ProtectedSellerProfileRoute
+  '/search': typeof PublicSearchRoute
   '/': typeof PublicIndexRoute
+  '/product/my-product': typeof ProtectedProductMyProductRoute
+  '/product/new': typeof ProtectedProductNewRoute
   '/products/$productId': typeof PublicProductsProductIdRoute
   '/products': typeof PublicProductsIndexRoute
+  '/c/$category/$subcategory': typeof PublicCCategorySubcategoryRoute
+  '/c/$category': typeof PublicCCategoryIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_protected': typeof ProtectedRouteWithChildren
   '/_protected/sellerProfile': typeof ProtectedSellerProfileRoute
+  '/_public/search': typeof PublicSearchRoute
   '/_public/': typeof PublicIndexRoute
+  '/_protected/product/my-product': typeof ProtectedProductMyProductRoute
+  '/_protected/product/new': typeof ProtectedProductNewRoute
   '/_public/products/$productId': typeof PublicProductsProductIdRoute
   '/_public/products/': typeof PublicProductsIndexRoute
+  '/_public/c/$category/$subcategory': typeof PublicCCategorySubcategoryRoute
+  '/_public/c/$category/': typeof PublicCCategoryIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/sellerProfile' | '/' | '/products/$productId' | '/products'
+  fullPaths:
+    | '/sellerProfile'
+    | '/search'
+    | '/'
+    | '/product/my-product'
+    | '/product/new'
+    | '/products/$productId'
+    | '/products'
+    | '/c/$category/$subcategory'
+    | '/c/$category'
   fileRoutesByTo: FileRoutesByTo
-  to: '/sellerProfile' | '/' | '/products/$productId' | '/products'
+  to:
+    | '/sellerProfile'
+    | '/search'
+    | '/'
+    | '/product/my-product'
+    | '/product/new'
+    | '/products/$productId'
+    | '/products'
+    | '/c/$category/$subcategory'
+    | '/c/$category'
   id:
     | '__root__'
     | '/_protected'
     | '/_protected/sellerProfile'
+    | '/_public/search'
     | '/_public/'
+    | '/_protected/product/my-product'
+    | '/_protected/product/new'
     | '/_public/products/$productId'
     | '/_public/products/'
+    | '/_public/c/$category/$subcategory'
+    | '/_public/c/$category/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   ProtectedRoute: typeof ProtectedRouteWithChildren
+  PublicSearchRoute: typeof PublicSearchRoute
   PublicIndexRoute: typeof PublicIndexRoute
   PublicProductsProductIdRoute: typeof PublicProductsProductIdRoute
   PublicProductsIndexRoute: typeof PublicProductsIndexRoute
+  PublicCCategorySubcategoryRoute: typeof PublicCCategorySubcategoryRoute
+  PublicCCategoryIndexRoute: typeof PublicCCategoryIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -95,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_public/search': {
+      id: '/_public/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof PublicSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/sellerProfile': {
@@ -118,15 +198,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicProductsProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_protected/product/new': {
+      id: '/_protected/product/new'
+      path: '/product/new'
+      fullPath: '/product/new'
+      preLoaderRoute: typeof ProtectedProductNewRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/product/my-product': {
+      id: '/_protected/product/my-product'
+      path: '/product/my-product'
+      fullPath: '/product/my-product'
+      preLoaderRoute: typeof ProtectedProductMyProductRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_public/c/$category/': {
+      id: '/_public/c/$category/'
+      path: '/c/$category'
+      fullPath: '/c/$category'
+      preLoaderRoute: typeof PublicCCategoryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_public/c/$category/$subcategory': {
+      id: '/_public/c/$category/$subcategory'
+      path: '/c/$category/$subcategory'
+      fullPath: '/c/$category/$subcategory'
+      preLoaderRoute: typeof PublicCCategorySubcategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface ProtectedRouteChildren {
   ProtectedSellerProfileRoute: typeof ProtectedSellerProfileRoute
+  ProtectedProductMyProductRoute: typeof ProtectedProductMyProductRoute
+  ProtectedProductNewRoute: typeof ProtectedProductNewRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedSellerProfileRoute: ProtectedSellerProfileRoute,
+  ProtectedProductMyProductRoute: ProtectedProductMyProductRoute,
+  ProtectedProductNewRoute: ProtectedProductNewRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
@@ -135,9 +247,12 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   ProtectedRoute: ProtectedRouteWithChildren,
+  PublicSearchRoute: PublicSearchRoute,
   PublicIndexRoute: PublicIndexRoute,
   PublicProductsProductIdRoute: PublicProductsProductIdRoute,
   PublicProductsIndexRoute: PublicProductsIndexRoute,
+  PublicCCategorySubcategoryRoute: PublicCCategorySubcategoryRoute,
+  PublicCCategoryIndexRoute: PublicCCategoryIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

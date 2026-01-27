@@ -24,6 +24,7 @@ public class SecurityConfig {
                                 "/api/categories",
                                 "/api/products/search/**",
                                 "/api/products/filter/**",
+                                "/api/products/suggest/**",
                                 "/eureka/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",

@@ -3,7 +3,6 @@ package com.promotion.categoryservice.controller;
 import com.promotion.categoryservice.dto.ApiResponse;
 import com.promotion.categoryservice.dto.CategoryRequest;
 import com.promotion.categoryservice.dto.CategoryResponse;
-import com.promotion.categoryservice.exception.GlobalExceptionHandler;
 import com.promotion.categoryservice.exception.NotFoundException;
 import com.promotion.categoryservice.model.Category;
 import com.promotion.categoryservice.repository.CategoryRepository;

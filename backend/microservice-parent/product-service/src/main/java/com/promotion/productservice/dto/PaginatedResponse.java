@@ -13,4 +13,5 @@ public class PaginatedResponse<T> {
     private int size;              // page size
     private long totalElements;    // total number of items
     private int totalPages;        // total pages
+    private boolean hasNext;
 }

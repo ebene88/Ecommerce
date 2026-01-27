@@ -1,6 +1,7 @@
 package com.promotion.productservice.service;
 
 import com.promotion.productservice.client.*;
+
 import com.promotion.productservice.dto.PaginatedResponse;
 import com.promotion.productservice.dto.ProductRequest;
 import com.promotion.productservice.dto.ProductResponse;
@@ -91,7 +92,9 @@ public class ProductService {
                 products.getNumber(),
                 products.getSize(),
                 products.getTotalElements(),
-                products.getTotalPages()
+                products.getTotalPages(),
+                products.hasNext()
+
         );
     }
 

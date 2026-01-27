@@ -1,7 +1,8 @@
 import requests
-from app.config import PRODUCT_SERVICE_URL
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+from app.config import PRODUCT_SERVICE_URL
 
 
 class ContentBasedRecommender:
@@ -20,7 +21,7 @@ class ContentBasedRecommender:
         self.products = data
         self.product_ids = [p["id"] for p in data]
 
-        corpus = [f'{p["name"]} {p["description"]} {p["categoryName"]}' for p in data]
+        corpus = [f'{p["name"]} {p["description"]} {p["categoryId"]}' for p in data]
 
         self.tfidf_matrix = self.vectorizer.fit_transform(corpus)
 

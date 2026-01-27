@@ -8,7 +8,7 @@ class Product(BaseModel):
     name: str
     description: str
     price: float
-    categoryName: str
+    categoryId: int
     sellerName: str
     imageUrls: list[str]
 

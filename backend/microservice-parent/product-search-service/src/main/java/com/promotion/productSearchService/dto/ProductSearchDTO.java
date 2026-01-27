@@ -12,7 +12,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class ProductSearchDTO {
     private String keyword;
-    private Long categoryId;
+    private int categoryId;
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
     private int page = 0;

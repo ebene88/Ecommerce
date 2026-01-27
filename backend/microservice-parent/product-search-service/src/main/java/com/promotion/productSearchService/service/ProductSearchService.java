@@ -6,6 +6,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.CompletionSuggest;
+import co.elastic.clients.elasticsearch.core.search.CompletionSuggestOption;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
 import com.promotion.productSearchService.dto.ApiResponse;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 @Service
@@ -83,13 +86,11 @@ public class ProductSearchService {
                 .build();
     }
 
-    // 🔹 Advanced filter search
-    public PaginatedResponse<ProductDocument> searchProducts(
-            ProductSearchDTO request
-    ) throws IOException {
+    public PaginatedResponse<ProductDocument> searchProducts(ProductSearchDTO request)
+            throws IOException {
 
         final String keyword = request.getKeyword();
-        final Long category = request.getCategoryId();
+        final int categoryId = request.getCategoryId(); // 0 = no filter
         final BigDecimal minPrice = request.getMinPrice();
         final BigDecimal maxPrice = request.getMaxPrice();
         final Map<String, Object> attributes = request.getAttributes();
@@ -98,28 +99,32 @@ public class ProductSearchService {
         final String sortField = request.getSortField();
         final String sortDirection = request.getSortDirection();
 
-        // Build BOOL query safely (no external mutable variables)
         Query boolQuery = QueryBuilders.bool(b -> {
 
-            // 🔍 Keyword search
+            boolean hasAnyFilter = false;
+
+            // 🔍 Keyword
             if (keyword != null && !keyword.isBlank()) {
-                b.must(QueryBuilders.multiMatch(m -> m
+                hasAnyFilter = true;
+                b.must(m -> m.multiMatch(mm -> mm
                         .fields("name", "description")
                         .query(keyword)
                 ));
             }
 
-            // 🗂 Category filter
-            if (category != null ) {
-                b.filter(QueryBuilders.term(t -> t
+            // 🗂 Category filter (FIXED)
+            if (categoryId > 0) {
+                hasAnyFilter = true;
+                b.filter(f -> f.term(t -> t
                         .field("categoryId")
-                        .value(category)
+                        .value(categoryId)
                 ));
             }
 
             // 💰 Price filter
             if (minPrice != null || maxPrice != null) {
-                b.filter(QueryBuilders.range(r -> {
+                hasAnyFilter = true;
+                b.filter(f -> f.range(r -> {
                     r.field("price");
                     if (minPrice != null) r.gte(JsonData.of(minPrice));
                     if (maxPrice != null) r.lte(JsonData.of(maxPrice));
@@ -127,85 +132,61 @@ public class ProductSearchService {
                 }));
             }
 
-            // 🧩 Attribute filters (dynamic)
+            // 🧩 Attributes filter
             if (attributes != null && !attributes.isEmpty()) {
+                hasAnyFilter = true;
                 attributes.forEach((key, value) -> {
+
+                    String field = "attributes." + key;
                     if (value instanceof String) {
-                        b.filter(QueryBuilders.term(t ->
-                                t.field("attributes." + key + ".keyword") // exact match
-                                        .value((String) value)
-                        ));
-                    } else if (value instanceof Integer) {
-                        b.filter(QueryBuilders.term(t ->
-                                t.field("attributes." + key)
-                                        .value((Integer) value)
-                        ));
-                    } else if (value instanceof Long) {
-                        b.filter(QueryBuilders.term(t ->
-                                t.field("attributes." + key)
-                                        .value((Long) value)
-                        ));
-                    } else if (value instanceof Double) {
-                        b.filter(QueryBuilders.term(t ->
-                                t.field("attributes." + key)
-                                        .value((Double) value)
-                        ));
-                    } else {
-                        // fallback for other types
-                        b.filter(QueryBuilders.term(t ->
-                                t.field("attributes." + key + ".keyword")
-                                        .value(value.toString())
-                        ));
+                        field += ".keyword";
                     }
+
+                    String finalField = field;
+                    b.filter(f -> f.term(t -> t
+                            .field(finalField)
+                            .value(value.toString())
+                    ));
                 });
             }
 
-
-
-
-            // 🔄 Fallback → match all
-            if ((keyword == null || keyword.isBlank())
-                    && (category == null )
-                    && minPrice == null
-                    && maxPrice == null
-                    && (attributes == null || attributes.isEmpty())) {
-
-                b.must(QueryBuilders.matchAll(ma -> ma));
+            // 🔄 No filters → match all
+            if (!hasAnyFilter) {
+                b.must(m -> m.matchAll(ma -> ma));
             }
 
             return b;
         });
 
-        // Pagination
         int from = page * size;
 
-        // Sorting
         SortOrder order = "desc".equalsIgnoreCase(sortDirection)
                 ? SortOrder.Desc
                 : SortOrder.Asc;
 
-        // Search request
-        SearchRequest searchRequest = SearchRequest.of(s -> {
-            s.index("products")
-                    .query(boolQuery)
-                    .from(from)
-                    .size(size);
-
-            if (sortField != null && !sortField.isBlank()) {
-                s.sort(so -> so.field(f -> f
-                        .field(sortField)
-                        .order(order)
-                ));
-            }
-            return s;
-        });
-
-        // Execute
         SearchResponse<ProductDocument> response =
-                elasticsearchClient.search(searchRequest, ProductDocument.class);
+                elasticsearchClient.search(
+                        SearchRequest.of(s -> {
+                            s.index("products")
+                                    .query(boolQuery)
+                                    .from(from)
+                                    .size(size);
 
-        List<ProductDocument> products = response.hits().hits().stream()
-                .map(hit -> hit.source())
+                            if (sortField != null && !sortField.isBlank()) {
+                                s.sort(so -> so.field(f -> f
+                                        .field(sortField)
+                                        .order(order)
+                                ));
+                            }
+
+                            return s;
+                        }),
+                        ProductDocument.class
+                );
+
+        List<ProductDocument> products = response.hits().hits()
+                .stream()
+                .map(Hit::source)
                 .toList();
 
         long total = response.hits().total() != null
@@ -222,5 +203,42 @@ public class ProductSearchService {
                 .totalPages(totalPages)
                 .build();
     }
+
+
+    public List<String> suggestByPrefix(String prefix) throws IOException {
+        if (prefix == null || prefix.length() < 2) {
+            return List.of();
+        }
+
+        SearchResponse<ProductDocument> response = elasticsearchClient.search(s -> s
+                        .index("products")
+                        .query(q -> q
+                                .bool(b -> b
+                                        // search prefix on name or description
+                                        .should(m -> m
+                                                .matchPhrasePrefix(mp -> mp
+                                                        .field("name")
+                                                        .query(prefix)
+                                                )
+                                        )
+                                        .should(m -> m
+                                                .matchPhrasePrefix(mp -> mp
+                                                        .field("description")
+                                                        .query(prefix)
+                                                )
+                                        )
+                                )
+                        )
+                        .size(10)  // limit suggestions
+                        .source(src -> src.filter(f -> f.includes("name"))),  // get only name field
+                ProductDocument.class
+        );
+
+        return response.hits().hits().stream()
+                .map(hit -> hit.source().getName())
+                .distinct()
+                .toList();
+    }
+
 
 }

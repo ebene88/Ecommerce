@@ -61,6 +61,22 @@ public class ProductSearchController {
         );
     }
 
+    @GetMapping("/suggest")
+    public ApiResponse<List<String>, Void> suggest(
+            @RequestParam String q
+    ) throws IOException {
+
+        List<String> suggestions = productSearchService.suggestByPrefix(q);
+
+        return new ApiResponse<>(
+                "success",
+                "Suggestions fetched successfully",
+                suggestions,
+                null
+        );
+    }
+
+
     // 🔹 Delete a product by ID
     @DeleteMapping("/{id}")
     public void delete(@PathVariable String id) throws IOException {

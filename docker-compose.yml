@@ -1,0 +1,209 @@
+
+version: "3.9"
+
+x-common-env: &common-env
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:password@discovery-server:8761/eureka
+
+x-mongo-env: &mongo-env
+  SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/promotion_product?authSource=admin
+
+x-keycloak-env: &keycloak-env
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ecommerce
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks:
+    - micro-net
+
+services:
+
+  discovery-server:
+    <<: *service-defaults
+    build:
+      context: ./backend/microservice-parent
+      dockerfile: discovery-server/Dockerfile
+    container_name: discovery-server
+    environment:
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: password
+    ports:
+      - "8761:8761"
+
+  keycloak:
+    <<: *service-defaults
+    image: quay.io/keycloak/keycloak:21.1.0
+    container_name: keycloak
+    command: start-dev
+    depends_on:
+      - discovery-server
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+
+  mongodb:
+    <<: *service-defaults
+    image: mongo:7
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: promotion_product
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  minio:
+    <<: *service-defaults
+    image: minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  postgres:
+    <<: *service-defaults
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_DB: product_category
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  elasticsearch:
+    <<: *service-defaults
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: elasticsearch
+
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: true
+      ELASTIC_PASSWORD: changeme
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  api-gateway:
+    <<: *service-defaults
+    build:
+      context: ./backend/microservice-parent
+      dockerfile: api-gateway/Dockerfile
+    container_name: api-gateway
+    depends_on:
+      - discovery-server
+      - keycloak
+    environment:
+      <<: [*common-env, *keycloak-env]
+      SPRING_APPLICATION_NAME: api-gateway
+    ports:
+      - "8181:8181"
+
+  category-service:
+    <<: *service-defaults
+    build:
+      context: ./backend/microservice-parent
+      dockerfile: category-service/Dockerfile
+    container_name: category-service
+    depends_on:
+      - postgres
+      - keycloak
+      - discovery-server
+    environment:
+      <<: [*common-env, *mongo-env, *keycloak-env]
+      SPRING_APPLICATION_NAME: category-service
+    ports:
+      - "8081:8080"
+
+  product-service:
+    <<: *service-defaults
+    build:
+      context: ./backend/microservice-parent
+      dockerfile: product-service/Dockerfile
+    container_name: product-service
+    depends_on:
+      - mongodb
+      - minio
+      - keycloak
+      - discovery-server
+    environment:
+      <<: [*common-env, *mongo-env, *keycloak-env]
+      SPRING_APPLICATION_NAME: product-service
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: product-images
+    ports:
+      - "8082:8080"
+
+  product-search-service:
+    <<: *service-defaults
+    build:
+      context: ./backend/microservice-parent
+      dockerfile: product-search-service/Dockerfile
+    container_name: product-search-service
+    depends_on:
+      - elasticsearch
+      - discovery-server
+    environment:
+      <<: [*common-env, *mongo-env]
+      SPRING_APPLICATION_NAME: product-search-service
+    ports:
+      - "8083:8080"
+  user-service:
+    <<: *service-defaults
+    build:
+      context: ./backend/microservice-parent
+      dockerfile: user-service/Dockerfile
+
+    container_name: user-service
+
+    depends_on:
+      - keycloak
+      - discovery-server
+      - minio
+
+    environment:
+      <<: [*common-env]
+      SPRING_APPLICATION_NAME: user-service
+
+      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ecommerce
+      KEYCLOAK_CLIENT_ID: user-service-client
+
+      # path to mounted docker secret
+      KEYCLOAK_CLIENT_SECRET_FILE: /run/secrets/keycloak_client_secret
+
+    secrets:
+      - keycloak_client_secret
+
+    ports:
+      - "8084:8080"
+
+networks:
+  micro-net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  minio_data:
+  postgres_data:
+  elasticsearch_data:
+secrets:
+  keycloak_client_secret:
+    file: ./secrets/keycloak_client_secret.txt
